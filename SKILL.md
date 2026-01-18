@@ -1,66 +1,94 @@
-# Codebase X-Ray Skill
+---
+name: codebase-xray
+description: Use when analyzing large codebases, debugging complex execution flows, finding definitions/usages, or needing to understand code structure without reading raw files.
+---
 
-## Description
-Expert guide for using `llm-tldr` to analyze codebases efficiently. Use this skill when you need to understand large projects, trace execution flows, debug complex logic, or find relevant code without reading thousands of lines of raw text. It reduces token usage by 95% by providing structural summaries.
+# Codebase X-Ray (llm-tldr)
 
-## Triggers
-- "Analyze this codebase"
-- "How does function X work?"
-- "Find where Y is defined"
-- "Trace the callers of Z"
-- "Debug why variable A is null"
-- "Get context for B"
+## Overview
+Uses the `llm-tldr` tool to analyze code structure, dependencies, and flow. This reduces token usage by 95% compared to reading raw files by providing structural summaries (AST, call graphs, CFG, DFG) instead of full text.
 
-## Critical Workflow
-1.  **Initialize**: Always run `tldr warm .` first to build/update indexes.
-2.  **Search/Locate**: Use `tldr semantic "query"` or `tldr structure` to find entry points.
-3.  **Analyze**: Use `tldr context` for understanding or `tldr slice` for debugging.
+## When to Use
+*   **Analyze codebase**: "Understand this project" or "Map the file structure"
+*   **Trace execution**: "Who calls function X?" or "What does function Y call?"
+*   **Debug logic**: "Why is this variable null?" or "Trace the data flow"
+*   **Find code**: "Where is the auth logic?" (semantic search)
+*   **Refactor**: "What breaks if I change this function?" (impact analysis)
 
-## Tool Capabilities & Usage
+## Prerequisites
+**Tool Installation**
+If `tldr` command is not found, install it via pip:
+```bash
+pip install llm-tldr
+# OR
+pip3 install llm-tldr
 
-### 1. Project Setup (Do this first!)
-*   **Command**: `tldr warm .`
-*   **Purpose**: Indexes the codebase (AST, Call Graph, etc.) and starts the background daemon.
-*   **Note**: Takes ~5-10s for initial run, <1s for updates.
+# OR Install from Source (Development)
+git clone https://github.com/parcadei/llm-tldr.git
+cd llm-tldr
+pip install -e .
+```
 
-### 2. Exploration (Map the Territory)
-*   **File Tree**: `tldr tree .`
-    *   *Use when*: You need to see the file layout.
-*   **Code Structure**: `tldr structure . --lang python` (or ts, go, etc.)
-    *   *Use when*: You need a high-level map of classes and functions in all files.
+## Quick Reference
 
-### 3. Context & Understanding (Read the Signposts)
-*   **Smart Context**: `tldr context <function_name> --project . --depth 2`
-    *   *Use when*: You want to understand a function *and* its immediate dependencies.
-    *   *Why*: Returns signature, docstring, and what it calls/is called by.
-*   **File Outline**: `tldr extract <file_path>`
-    *   *Use when*: You want to see all functions/classes in a file without reading the body.
+| Goal | Command |
+|------|---------|
+| **Initialize (REQUIRED)** | `tldr warm .` |
+| **Map Structure** | `tldr structure . --lang [python|ts|...]` |
+| **Understand Function** | `tldr context <name> --project . --depth 2` |
+| **Trace Callers** | `tldr impact <name> .` |
+| **Debug Logic** | `tldr slice <file> <func> <line>` |
+| **Semantic Search** | `tldr semantic "description of logic" .` |
 
-### 4. Navigation (Follow the Roads)
-*   **Call Graph (Forward)**: `tldr calls .` or check `calls` in `extract` output.
-    *   *Use when*: Tracing what a function *does*.
-*   **Impact Analysis (Backward)**: `tldr impact <function_name> .`
-    *   *Use when*: Refactoring. "Who uses this function?" or "What breaks if I change this?"
+## Core Workflow
 
-### 5. Deep Analysis & Debugging (Inspect the Engine)
-*   **Control Flow**: `tldr cfg <file> <function>`
-    *   *Use when*: Understanding complex logic (loops, nested ifs).
-*   **Data Flow**: `tldr dfg <file> <function>`
-    *   *Use when*: Tracing where a variable is defined or used.
-*   **Program Slicing**: `tldr slice <file> <function> <line_number>`
-    *   *Use when*: "Why is this line crashing?" Returns *only* the code affecting that specific line.
+### 1. Initialize (Mandatory)
+Always start by warming the cache to build indexes and start the daemon.
+```bash
+tldr warm .
+```
 
-### 6. Search (Find the Needle)
-*   **Semantic Search**: `tldr semantic "natural language description" .`
-    *   *Use when*: You know *what* it does, but not the function name. (e.g., "verify jwt token").
-*   **Text Search**: `tldr search "exact_pattern" .`
-    *   *Use when*: Searching for specific variable names or error strings.
+### 2. Locate Entry Points
+Find where to look without reading files.
+```bash
+# If you know the concept (e.g., "authentication")
+tldr semantic "verify user token" .
 
-## Best Practices for Agents
-1.  **Token Economy**: **Never** read a 500+ line file raw if `tldr context` or `tldr extract` can give you the answer.
-2.  **Breadth First**: Start with `tldr structure` or `tldr arch` to understand layers before diving into specific files.
-3.  **Surgical Debugging**: Don't guess. Use `tldr slice` to isolate the bug's origin.
-4.  **Cross-Language**: Remember `tldr` supports 17 languages. Specify `--lang` if auto-detection might be ambiguous.
+# If you want a map of the territory
+tldr structure . --lang python
+```
+
+### 3. Analyze Context
+Read the map, not the terrain. Get the function + its dependencies.
+```bash
+tldr context process_payment --project . --depth 2
+```
+*Returns signature, docstring, and immediate callers/callees.*
+
+### 4. Deep Dive (Only if needed)
+Inspect specific logic paths or data flows.
+```bash
+# "Why is this line executed?" (Control Flow)
+tldr cfg src/payment.py process_payment
+
+# "Where did this variable come from?" (Data Flow)
+tldr dfg src/payment.py process_payment
+
+# "What code affects line 50?" (Program Slicing)
+tldr slice src/payment.py process_payment 50
+```
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| Reading raw files (cat/read) for overview | Use `tldr structure` or `tldr extract` to save 90% tokens. |
+| Guessing function names | Use `tldr semantic` to find code by behavior. |
+| Skipping `tldr warm` | Always run it first to ensure indexes are up-to-date. |
+| Reading full file to debug one line | Use `tldr slice` to see only the relevant lines. |
+
+## Supported Languages
+Python, TypeScript, JavaScript, Go, Rust, Java, C, C++, Ruby, PHP, Kotlin, Swift, C#, Scala, Lua, Luau, Elixir.
 
 ## Advanced Configuration
 

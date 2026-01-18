@@ -21,6 +21,8 @@ If you are using an agentic workflow (like Claude Code, OpenCode, or similar):
 1.  **Install the Tool**: Ensure `llm-tldr` is installed in your environment:
     ```bash
     pip install llm-tldr
+    # OR
+    pip3 install llm-tldr
     ```
 
 2.  **Load the Skill**: Provide the content of `SKILL.md` to your agent as a system prompt, memory, or "skill" definition.
