@@ -14,6 +14,15 @@ This is a **meta-instruction set** for AI agents. It teaches them how to:
 
 The core instruction set is located in [SKILL.md](./SKILL.md).
 
+
+## Installation
+
+You can install this skill directly using the `skills` CLI:
+```bash
+npx skills add 0xzapata/codebase-xray-skill
+```
+
+This will download `SKILL.md` to your skills directory and make it available to your agent.
 ## Usage
 
 If you are using an agentic workflow (like Claude Code, OpenCode, or similar):
