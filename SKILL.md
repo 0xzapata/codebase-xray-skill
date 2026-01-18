@@ -61,3 +61,40 @@ Expert guide for using `llm-tldr` to analyze codebases efficiently. Use this ski
 2.  **Breadth First**: Start with `tldr structure` or `tldr arch` to understand layers before diving into specific files.
 3.  **Surgical Debugging**: Don't guess. Use `tldr slice` to isolate the bug's origin.
 4.  **Cross-Language**: Remember `tldr` supports 17 languages. Specify `--lang` if auto-detection might be ambiguous.
+
+## Advanced Configuration
+
+### Automated Reindexing (Git Hooks)
+To keep the index fresh automatically, add `tldr warm .` to your git hooks.
+*   **Hook**: `.git/hooks/post-checkout` and `.git/hooks/post-merge`
+*   **Command**:
+    ```bash
+    #!/bin/sh
+    tldr warm . > /dev/null 2>&1 &
+    ```
+*   **Benefit**: Index updates in the background whenever you switch branches or pull code.
+
+### Gitignore Rules
+Add these to your `.gitignore` to keep your repo clean:
+```text
+.tldr/          # Cache and daemon socket
+.tldrignore     # Auto-generated ignore rules
+```
+
+## Embedding Model Setup
+The first time you run `tldr semantic`, it downloads the embedding model (~1.3GB).
+*   **Model**: `BAAI/bge-large-en-v1.5` (High quality)
+*   **Offline Mode**: Once downloaded, it works fully offline.
+*   **Smaller Model**: Use `--model all-MiniLM-L6-v2` (80MB) if bandwidth/storage is tight.
+    ```bash
+    tldr semantic "query" . --model all-MiniLM-L6-v2
+    ```
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| **Daemon not responding** | Stale socket file | `rm /tmp/tldr-*.sock` then `tldr warm .` |
+| **"Lock file exists"** | Previous crash | `rm /tmp/tldr-*.lock` |
+| **Semantic search slow** | First-run model load | Wait for download to complete (up to 2 mins). |
+| **Missing files in tree** | .tldrignore | Check `.tldrignore` or use `--no-ignore`. |
